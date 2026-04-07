@@ -1,0 +1,120 @@
+version: 2
+
+models:
+  - name: core_inventory_snapshot
+    description: "Cleaned and typed inventory snapshot data from RAW. Casts date, boolean flags, and decimal columns"
+    columns:
+      - name: date
+        description: "The date of the inventory snapshot. Cast from VARCHAR to DATE."
+        tests:
+          - not_null
+      - name: store_id
+        description: "Store identifier"
+        tests:
+          - not_null
+      - name: product_id
+        description: "Product identifier"
+        tests:
+          - not_null
+      - name: opening_stock
+        description: "The opening stock quantity for the product on the given date"
+      - name: closing_stock
+        description: "The closing stock quantity for the product on the given date"
+      - name: units_ordered
+        description: "The number of units ordered for the product on the given date"
+      - name: demand_forecast
+        description: "The demand forecast for the product on the given date"
+      - name: reorder_point
+        description: "The reorder point for the product on the given date"
+      - name: lead_time_days
+        description: "The lead time in days for the product"
+      - name: is_stockout
+        description: "Boolean flag indicating if the product is out of stock. Cast from INT (0/1) to BOOLEAN."
+        tests:
+          - not_null
+      - name: is_overstock
+        description: "Boolean flag indicating if the product is overstocked. Cast from INT (0/1) to BOOLEAN."
+        tests:
+          - not_null
+      - name: days_of_supply
+        description: "The number of days the current stock will last based on demand forecast"
+      - name: inventory_value
+        description: "The total value of the inventory for the product on the given date. Cast to DECIMAL(10,2)."
+        tests:
+          - not_null
+
+  - name: core_daily_sales
+    description: "Cleaned and typed daily sales data from RAW. Casts date, boolean flags, and decimal columns"
+    columns:
+      - name: transaction_id
+        description: "Unique identifier for the sales transaction"
+        tests:
+          - not_null
+      - name: date
+        description: "The date of the sales record. Cast from VARCHAR to DATE."
+        tests:
+          - not_null
+      - name: store_id
+        description: "Store identifier"
+        tests:
+          - not_null
+      - name: product_id
+        description: "Product identifier"
+        tests:
+          - not_null
+      - name: units_sold
+        description: "The number of units sold for the product on the given date"
+      - name: unit_price
+        description: "The price per unit for the product on the given date. Cast to DECIMAL(10,2)."
+      - name: discount_pct
+        description: "The discount percentage applied to the product on the given date"
+      - name: is_holiday_promo
+        description: "Boolean flag indicating if the sale was part of a holiday promotion. Cast from INT (0/1) to BOOLEAN."
+      - name: weather_condition
+        description: "The weather condition on the day of the sale"
+      - name: seasonality
+        description: "The seasonality category for the date of the sale"
+      - name: competitor_price
+        description: "The competitor price for the product on the given date. Cast to DECIMAL(10,2)."
+      - name: gross_revenue
+        description: "The gross revenue for the sales transaction. Cast to DECIMAL(10,2)."
+      - name: net_revenue
+        description: "The net revenue for the sales transaction after discounts. Cast to DECIMAL(10,2)."
+
+  - name: core_purchase_orders
+    description: "Cleaned and typed purchase order data from RAW. Casts date columns and adds derived fields."
+    columns:
+      - name: po_id
+        description: "Unique identifier for the purchase order"
+        tests:
+          - not_null
+      - name: order_date
+        description: "The date the purchase order was placed. Cast from VARCHAR to DATE."
+        tests:
+          - not_null
+      - name: expected_receipt_date
+        description: "The expected receipt date for the purchase order. Cast from VARCHAR to DATE."
+      - name: store_id
+        description: "Store identifier"
+        tests:
+          - not_null
+      - name: product_id
+        description: "Product identifier"
+        tests:
+          - not_null
+      - name: supplier_id
+        description: "Supplier identifier"
+        tests:
+          - not_null
+      - name: qty_ordered
+        description: "The quantity of the product ordered in the purchase order"
+      - name: unit_cost
+        description: "The cost per unit for the product. Cast to DECIMAL(10,2)."
+      - name: total_order_value
+        description: "The total value of the purchase order, calculated as qty_ordered * unit_cost. Cast to DECIMAL(10,2)."
+      - name: lead_time_days
+        description: "The agreed lead time in days for the supplier"
+      - name: status
+        description: "The status of the purchase order — either PENDING or RECEIVED"
+      - name: planned_lead_time
+        description: "Days between order_date and expected_receipt_date. Matches lead_time_days in this dataset — retained for validation in real data scenarios."

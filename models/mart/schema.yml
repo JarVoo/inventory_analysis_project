@@ -1,0 +1,128 @@
+version: 2
+
+models:
+  - name: mart_inventory_health
+    description: "Mart model calculating inventory health metrics such as turnover, stockout rate, and overstock rate"
+    columns:
+      - name: product_id
+        description: "Product identifier"
+        tests:
+          - not_null
+      - name: product_name
+        description: "Name of the product"
+        tests:
+          - not_null
+      - name: category
+        description: "Product category"
+        tests:
+          - not_null
+      - name: store_id
+        description: "Store identifier"
+        tests:
+          - not_null
+      - name: total_stockout_days 
+        description: "The total number of days the product was out of stock during the period. CAST Boolean to INT (0/1) and sum over the period."
+        tests:
+          - not_null
+      - name: stockout_rate
+        description: "The stockout rate for the product on the given date. Calculated as the percentage of days with stockouts over the total days in the period. CAST Boolean to INT (0/1)."
+        tests:
+          - not_null
+      - name: total_overstock_days
+        description: "The total number of days the product was overstocked during the period. CAST Boolean to INT (0/1) and sum over the period."
+      - name: overstock_rate
+        description: "The overstock rate for the product on the given date. Calculated as the percentage of days with overstocking over the total days in the period. CAST Boolean to INT (0/1)."
+      - name: avg_days_of_supply
+        description: "The average number of days the current stock will last based on demand forecast during the period. Round to 2 decimal places."
+      - name: avg_closing_stock
+        description: "The average closing stock quantity for the product during the period. Round to 2 decimal places."
+  - name: mart_product_velocity
+    description: "Mart model calculating product velocity metrics such as units sold, sales revenue, and inventory turnover"
+    columns:
+      - name: product_id
+        description: "Product identifier"
+        tests:
+          - not_null
+      - name: product_name
+        description: "Name of the product"
+        tests:
+          - not_null
+      - name: category
+        description: "Product category"
+        tests:
+          - not_null
+      - name: avg_daily_units_sold
+        description: "The average number of units sold for the product per day during the period."
+        tests:
+          - not_null
+      - name: total_units_sold
+        description: "The total number of units sold for the product during the period. Sum over the period."
+        tests:
+          - not_null
+      - name: days_with_sales
+        description: "The total number of days with sales for the product during the period. COUNT of distinct dates"
+        tests:
+          - not_null
+      - name: velocity_segment
+        description: "The velocity segment for the product based on average daily units sold. Categorized as 'High' if over average_daily_units_sold, 'Low' if below this average. Created with a CASE WHEN statement."
+        tests:
+          - not_null
+  - name: mart_inventory_turnover
+    description: "Mart model calculating inventory turnover metrics such as turnover ratio, days of inventory on"
+    columns:
+      - name: product_id
+        description: "Product identifier"
+        tests:
+          - not_null
+      - name: product_name
+        description: "Name of the product"
+        tests:
+          - not_null
+      - name: category
+        description: "Product category"
+        tests:
+          - not_null
+      - name: store_id
+        description: "Store identifier"
+        tests:
+          - not_null
+      - name: avg_cogs
+        description: "The average cost of goods sold (COGS) for the product during the period. Round to 2 decimal places."
+        tests:
+          - not_null
+      - name: avg_inventory_value
+        description: "The average inventory value for the product during the period. Round to 2 decimal places."
+        tests:
+          - not_null
+      - name: inventory_turnover
+        description: "The inventory turnover ratio for the product during the period. Calculated as the averagecost of goods sold divided by the average inventory value. Round to 2 decimal places. Values with 0, were returned as NULL in CASE statement"
+  - name: mart_reorder_analysis
+    description: "Mart model calculating reorder analysis metrics such as suggested_reorder_point comparing to given reorder_point, comparing a computed actual forecast to given forecast."
+    columns:
+      - name: product_id
+        description: "Product identifier"
+        tests:
+          - not_null
+      - name: product_name
+        description: "Name of the product"
+        tests:
+          - not_null
+      - name: category
+        description: "Product category"
+        tests:
+          - not_null
+      - name: suggested_reorder_point 
+        description: "The suggested reorder point for the product based on demand and lead time. Round to 2 decimal places. The average daily units sold multiplied by lead time days"
+        tests:
+          - not_null
+      - name: reorder_point
+        description: "The given reorder point for the product. Round to 2 decimal places."
+        tests:
+          - not_null
+      - name: avg_forecast
+        description: "The average forecasted demand for the product during the period. Round to 2 decimal places. AVG(demand_forecast)"
+      - name: forecast_accuracy_percentage
+        description: "A calculated metric: (AVG(units_sold) - AVG(demand_forecast)) / AVG(demand_forecast) * 100. Round to 2 decimal places. Values with 0 in the denominator were returned as NULL in CASE statement."
+      - name: reorder_point_gap
+        description: "The gap between the suggested reorder point and the given reorder point. Calculated as suggested_reorder_point - reorder_point. Round to 2 decimal places."
+

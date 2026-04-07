@@ -23,7 +23,7 @@ These two errors often have the same root cause, reorder points and demand forec
 
 ## Architecture
 
-![dbt Lineage Graph](assets/lineage.png)
+![dbt Lineage Graph](assets/dbt-lineage.png)
 
 Data flows through three layers:
 

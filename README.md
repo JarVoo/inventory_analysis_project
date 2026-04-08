@@ -128,7 +128,7 @@ The most counterintuitive finding in this analysis is that products can be overs
 
 ![Inventory Turnover](assets/finding-4.png)
 
-Inventory turnover measures how efficiently stock is being converted into sales. A healthy retail operation typically targets a turnover ratio of 4–12x per year. In this dataset, turnover ratios range from 0.72 to 1.25, well below any retail benchmark. This means stock is sitting in the warehouse longer than it should be relative to the value being sold. Action Figure Set and Classic LEGO Set have the lowest turnover at 0.72 and 0.78 respectively, indicating these products tie up the most cash relative to their sales velocity. It is important to note that this finding is partially a consequence of synthetic data calibration — inventory values were generated at a lower scale than sales volumes. In real operational data, this metric would provide a more reliable signal of cash efficiency.
+Inventory turnover measures how efficiently stock is being converted into sales. A healthy retail operation typically targets a turnover ratio of 4–12x per year. In this dataset, turnover ratios range from 0.72 to 1.25, well below any retail benchmark. This means stock is sitting in the warehouse longer than it should be relative to the value being sold. Action Figure Set and Classic LEGO Set have the lowest turnover at 0.72 and 0.78 respectively, indicating these products tie up the most cash relative to their sales velocity. It is important to note that this finding is partially a consequence of synthetic data calibration, inventory values were generated at a lower scale than sales volumes. In real operational data, this metric would provide a more reliable signal of cash efficiency.
 
 ## Recommendations
 

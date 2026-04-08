@@ -22,9 +22,9 @@ This project was built in collaboration with Claude (Anthropic) as an AI analyti
 
 Claude was used throughout this project for:
 
-- **Code review** — SQL models were written independently and reviewed for logic errors, analytical correctness, and best practices
-- **Analytical reasoning** — business logic behind each MART model was reasoned through conversationally before any code was written, ensuring models answered real operational questions
-- **Documentation** — README structure and writing were developed collaboratively, with all content reflecting genuine project decisions
+- **Code review** - SQL models were written independently and reviewed for logic errors, analytical correctness, and best practices
+- **Analytical reasoning** - business logic behind each MART model was reasoned through conversationally before any code was written, ensuring models answered real operational questions
+- **Documentation** - README structure and writing were developed collaboratively, with all content reflecting genuine project decisions
 
 Claude did not write this project. I asked questions, it flagged errors, explained concepts, and challenged assumptions - functioning as a senior colleague available throughout the build.
 
@@ -55,9 +55,9 @@ These two errors often have the same root cause, reorder points and demand forec
 
 Data flows through three layers:
 
-- **RAW** — source tables loaded directly from S3 into Snowflake via COPY INTO. No transformations applied.
-- **CORE** — one view per source table. Casts data types, adds boolean flags, and derives basic fields. Built as views so they always reflect current RAW data.
-- **MART** — aggregated tables built on CORE models. Each mart answers a specific business question and is materialised as a table for query performance.
+- **RAW** - source tables loaded directly from S3 into Snowflake via COPY INTO. No transformations applied.
+- **CORE** - one view per source table. Casts data types, adds boolean flags, and derives basic fields. Built as views so they always reflect current RAW data.
+- **MART** - aggregated tables built on CORE models. Each mart answers a specific business question and is materialised as a table for query performance.
 
 ## Tech Stack
 

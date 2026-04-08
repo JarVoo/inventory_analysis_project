@@ -74,7 +74,7 @@ Data flows through three layers:
 
 ### Finding 1 - Reorder Points Are Critically Underset
 
-![Reorder Analysis](assets/finding-reorder point.png)
+![Reorder Analysis](assets/finding-1.png)
 
 Every product in the catalogue has a current reorder point set far below what actual sales data suggests it should be. The worst case is Casual T-Shirt, currently configured to trigger a reorder at 113 units but based on average daily sales multiplied by supplier lead time, the correct trigger point is 1,943 units. This gap of 1,830 units means that by the time a reorder is placed, there is not enough stock remaining to last through the supplier's delivery window. Stockouts are structurally inevitable under the current configuration. This is not a product-specific issue, every single product shows a positive reorder gap, indicating a systemic misconfiguration across the entire inventory system.
 
@@ -82,7 +82,7 @@ Every product in the catalogue has a current reorder point set far below what ac
 
 ### Finding 2 — Demand Forecasts Systematically Overestimate Sales
 
-
+![Forecast Accuracy](assets/finding-2.png)
 
 Across all 20 products, the demand forecast consistently overestimates actual sales by approximately 3.5%. While a 3.5% deviation may appear minor, the consistency across every product suggests the forecasting inputs or assumptions are uniformly optimistic. In practice this leads to ordering slightly more stock than demand requires, which compounds the overstock problem identified elsewhere in this analysis. A well-calibrated forecast should show deviations distributed around zero, some products over, some under. A one-directional bias across the entire catalogue signals the forecast model needs recalibration and points to the issue of this dataset being synthetic in nature.
 
@@ -90,7 +90,7 @@ Across all 20 products, the demand forecast consistently overestimates actual sa
 
 ### Finding 3 — ProductsAreSimultaneouslyOverstoandExSOk vs Sutcts Are Simultaneously Overstocked and Experiencing Stockouts
 
-
+![Overstock vs Stockout](assets/finding-3.png)
 
 The most counterintuitive finding in this analysis is that products can be overstocked and stockout at the same time. Canned Tomatoes, for example, is overstocked on 50% of trading days yet still experiences stockouts. Stock arrives in large batches creating a temporary overstock, sells down over time, runs out before the next order arrives, and then the cycle repeats. The root cause is not the reorder quantity but the reorder timing. Products sitting in the high overstock and high stockout quadrant of the scatter plot are the highest priority for replenishment cycle redesign, adjusting order frequency rather than order size.
 
@@ -98,6 +98,6 @@ The most counterintuitive finding in this analysis is that products can be overs
 
 ### Finding 4 — Inventory Turnover Is Below Benchmark Across the Catalogue
 
-
+![Inventory Turnover](assets/finding-4.png)
 
 Inventory turnover measures how efficiently stock is being converted into sales. A healthy retail operation typically targets a turnover ratio of 4–12x per year. In this dataset, turnover ratios range from 0.72 to 1.25 — well below any retail benchmark. This means stock is sitting in the warehouse longer than it should be relative to the value being sold. Action Figure Set and Classic LEGO Set have the lowest turnover at 0.72 and 0.78 respectively, indicating these products tie up the most cash relative to their sales velocity. It is important to note that this finding is partially a consequence of synthetic data calibration — inventory values were generated at a lower scale than sales volumes. In real operational data, this metric would provide a more reliable signal of cash efficiency.

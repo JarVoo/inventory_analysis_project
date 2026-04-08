@@ -41,3 +41,30 @@ Data flows through three layers:
 | Power BI | Dashboard and visualisation layer |
 | Git & GitHub | Version control |
 
+## Data Model
+
+### RAW Layer — Source Tables
+
+| Table | Description |
+|-------|-------------|
+| `dim_product_master` | Dimension table containing all unique products, their categories, suppliers, unit cost, base price, reorder points, reorder quantities, and supplier lead times. |
+| `fct_daily_sales` | Daily sales transactions across all stores. Contains transaction ID, date, store, units sold, unit price, discounts applied, weather conditions, seasonality, competitor pricing, gross revenue, and net revenue. |
+| `fct_inventory_snapshot` | Daily stock level snapshot per product per store. Contains opening and closing stock, units ordered, demand forecast, days of supply, and inventory value. |
+| `fct_purchase_orders` | Supplier-facing purchase order records. Contains order and expected receipt dates, quantities ordered, unit cost, total order value, supplier ID, and order status (PENDING or RECEIVED). |
+
+### CORE Layer — Cleaned Source Tables (Views)
+
+| Model | Description |
+|-------|-------------|
+| `core_inventory_snapshot` | Cleans and types the raw inventory snapshot. Casts date strings to DATE, integer flags to BOOLEAN, and currency columns to DECIMAL(10,2). Serves as the foundation for inventory health and reorder analysis. |
+| `core_daily_sales` | Cleans and types the raw sales data. Casts date strings to DATE, holiday promo flag to BOOLEAN, and price/revenue columns to DECIMAL(10,2). Primary source for velocity and turnover analysis. |
+| `core_purchase_orders` | Cleans and types the raw purchase order data. Adds a derived `planned_lead_time` column calculated from order and expected receipt dates. Not consumed by any MART model in this project — retained as a foundation for future supplier performance analysis. |
+
+### MART Layer — BI-Ready Aggregated Tables
+
+| Model | Description |
+|-------|-------------|
+| `mart_product_velocity` | Classifies products as High or Low Velocity based on average daily units sold relative to the overall product average. Identifies fast and slow movers across the catalogue. |
+| `mart_inventory_health` | Calculates stockout and overstock rates per product per store as a percentage of total trading days. Surfaces which product-store combinations have the most critical inventory imbalances. |
+| `mart_inventory_turnover` | Measures how efficiently stock is converted to sales by comparing average daily COGS against average daily inventory value. A ratio below 1.0 indicates stock is not moving fast enough relative to holding costs. |
+| `mart_reorder_analysis` | Compares current reorder points against data-driven suggestions based on actual average daily demand multiplied by supplier lead time. Also validates demand forecast accuracy against actual sales. |

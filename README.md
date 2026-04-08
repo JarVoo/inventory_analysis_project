@@ -30,3 +30,14 @@ Data flows through three layers:
 - **RAW** — source tables loaded directly from S3 into Snowflake via COPY INTO. No transformations applied.
 - **CORE** — one view per source table. Casts data types, adds boolean flags, and derives basic fields. Built as views so they always reflect current RAW data.
 - **MART** — aggregated tables built on CORE models. Each mart answers a specific business question and is materialised as a table for query performance.
+
+## Tech Stack
+
+| Tool | Purpose |
+|------|---------|
+| Amazon S3 | Cloud storage — raw CSV file landing zone |
+| Snowflake | Cloud data warehouse — RAW, CORE, and MART layers |
+| dbt Core | Transformation, testing, and documentation |
+| Power BI | Dashboard and visualisation layer |
+| Git & GitHub | Version control |
+

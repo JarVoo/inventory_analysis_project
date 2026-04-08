@@ -1,8 +1,36 @@
+# Retail Inventory Intelligence
+## An end-to-end analytics pipeline built on S3, Snowflake, dbt Core, and Power BI to identify stockout risk, overstock patterns, and reorder optimisation opportunities across a 20-product retail catalogue.
+
 ## Introduction
 
-Retailers face two costly inventory problems simultaneously, stock that sits unsold tying up cash, and stock that runs out before replenishment arrives losing sales. This project builds a full analytical pipeline to identify which products are affected, quantify the impact, and surface data-driven reorder recommendations. All of this is created in an end-to-end workflow, data is ingested via S3, and stored in Snowflake. The data is transformed in dbt, documentation recorded, and testing procedures put in place to export to Power BI where stockout rates, overstock patterns, inventory turnover, and reorder gaps are visualised in a single operational dashboard.
+Retailers face two costly inventory problems simultaneously, stock that sits unsold tying up cash, and stock that runs out before replenishment arrives losing sales. This project builds a full analytical pipeline to identify which products are affected, quantify the impact, and surface data-driven reorder recommendations. All of this is created in an end-to-end workflow, data is ingested via S3, and stored in Snowflake. The data is transformed in dbt, documentation recorded, and testing procedures put in place to export to Power BI where stockout rates, overstock patterns, inventory turnover, and reorder gaps are visualised in a single operational dashboard. Important to know - this data is taken from https://www.kaggle.com/datasets/anirudhchauhan/retail-store-inventory-forecasting-dataset
+which is composed of synthetic data for a fictitious company. However this data is realistic for analysing and forecasting retail store inventory demand. It contains over 73,000 rows of data across five(5) stores and twenty(20) products.
 
-# Problem Statement
+## Going Beyond the Dataset
+
+This dataset was published as a machine learning challenge, designed for demand forecasting models, LSTM networks, and dynamic pricing experiments typically explored in Jupyter notebooks.
+
+Rather than following that path, I took the same data and built something closer to a production analytics environment. A fully layered data warehouse with RAW, CORE, and MART separation, 39 automated data quality tests, documented models, the kind of infrastructure a real retail analytics team would operate on.
+
+The analysis focused not on prediction but on diagnosis, identifying where the inventory system is failing today, why it is failing, and what specific changes would fix it. The findings around reorder point misconfiguration, systematic forecast bias, and replenishment timing are immediately actionable without a single machine learning model.
+
+The natural next phase would extend this pipeline with a Python-based demand forecasting layer, replacing the existing forecast column with a model built on actual historical sales patterns, and feeding improved predictions back into the reorder analysis. That work is in progress.
+
+## AI-Assisted Development
+
+This project was built in collaboration with Claude (Anthropic) as an AI analytical thinking partner.
+
+Claude was used throughout this project for:
+
+- **Code review** — SQL models were written independently and reviewed for logic errors, analytical correctness, and best practices
+- **Analytical reasoning** — business logic behind each MART model was reasoned through conversationally before any code was written, ensuring models answered real operational questions
+- **Documentation** — README structure and writing were developed collaboratively, with all content reflecting genuine project decisions
+
+Claude did not write this project. I asked questions, it flagged errors, explained concepts, and challenged assumptions - functioning as a senior colleague available throughout the build.
+
+This reflects how AI tools are used in modern data teams, not as code generators, but as thinking partners that accelerate learning and improve output quality. The ability to work effectively with AI assistants is increasingly a core professional skill, and this project was built with that in mind.
+
+## Problem Statement
 
 Let me explain where retailers get caught, too little stock (stockout), and too much stock (overstock):
 
@@ -35,8 +63,8 @@ Data flows through three layers:
 
 | Tool | Purpose |
 |------|---------|
-| Amazon S3 | Cloud storage — raw CSV file landing zone |
-| Snowflake | Cloud data warehouse — RAW, CORE, and MART layers |
+| Amazon S3 | Cloud storage - raw CSV file landing zone |
+| Snowflake | Cloud data warehouse - RAW, CORE, and MART layers |
 | dbt Core | Transformation, testing, and documentation |
 | Power BI | Dashboard and visualisation layer |
 | Git & GitHub | Version control |
@@ -101,3 +129,14 @@ The most counterintuitive finding in this analysis is that products can be overs
 ![Inventory Turnover](assets/finding-4.png)
 
 Inventory turnover measures how efficiently stock is being converted into sales. A healthy retail operation typically targets a turnover ratio of 4–12x per year. In this dataset, turnover ratios range from 0.72 to 1.25 — well below any retail benchmark. This means stock is sitting in the warehouse longer than it should be relative to the value being sold. Action Figure Set and Classic LEGO Set have the lowest turnover at 0.72 and 0.78 respectively, indicating these products tie up the most cash relative to their sales velocity. It is important to note that this finding is partially a consequence of synthetic data calibration — inventory values were generated at a lower scale than sales volumes. In real operational data, this metric would provide a more reliable signal of cash efficiency.
+
+## Recommendations
+
+Reorder points across all 20 products should be recalculated immediately using actual average daily sales multiplied by supplier lead time. The current configuration is underset across the entire catalogue, with Casual T-Shirt, Organic Oats, and USB-C Hub carrying the largest gaps. Until this is corrected, stockouts are structurally unavoidable regardless of how much stock is ordered.
+
+The demand forecasting model requires recalibration. A consistent 3.5% overestimate across every product is not random error - it is a systematic bias that compounds overstock levels over time. Adjusting the model inputs to reduce this directional bias will improve order accuracy and free up cash currently tied up in excess stock.
+
+For products simultaneously experiencing high overstock and stockout rates, particularly Canned Tomatoes, Smart Home Speaker, and Dining Table Oak, the solution is not to order more but to order more frequently in smaller batches. The replenishment cycle is the problem, not the volume. Smoother, more consistent deliveries will reduce the boom-and-bust pattern currently driving both metrics in the wrong direction.
+
+Finally, the eight products with inventory turnover below 0.85 should be reviewed for promotional intervention. Action Figure Set and Classic LEGO Set are tying up the most cash relative to their sales velocity. Targeted discounting or bundling strategies would accelerate sell-through and improve overall capital efficiency across the catalogue.
+

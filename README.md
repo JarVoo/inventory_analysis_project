@@ -71,7 +71,7 @@ Data flows through three layers:
 
 ## Data Model
 
-### RAW Layer — Source Tables
+### RAW Layer : Source Tables
 
 | Table | Description |
 |-------|-------------|
@@ -80,7 +80,7 @@ Data flows through three layers:
 | `fct_inventory_snapshot` | Daily stock level snapshot per product per store. Contains opening and closing stock, units ordered, demand forecast, days of supply, and inventory value. |
 | `fct_purchase_orders` | Supplier-facing purchase order records. Contains order and expected receipt dates, quantities ordered, unit cost, total order value, supplier ID, and order status (PENDING or RECEIVED). |
 
-### CORE Layer — Cleaned Source Tables (Views)
+### CORE Layer : Cleaned Source Tables (Views)
 
 | Model | Description |
 |-------|-------------|
@@ -88,7 +88,7 @@ Data flows through three layers:
 | `core_daily_sales` | Cleans and types the raw sales data. Casts date strings to DATE, holiday promo flag to BOOLEAN, and price/revenue columns to DECIMAL(10,2). Primary source for velocity and turnover analysis. |
 | `core_purchase_orders` | Cleans and types the raw purchase order data. Adds a derived `planned_lead_time` column calculated from order and expected receipt dates. Not consumed by any MART model in this project, retained as a foundation for future supplier performance analysis. |
 
-### MART Layer — BI-Ready Aggregated Tables
+### MART Layer : BI-Ready Aggregated Tables
 
 | Model | Description |
 |-------|-------------|

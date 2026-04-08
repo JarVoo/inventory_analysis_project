@@ -86,7 +86,7 @@ Data flows through three layers:
 |-------|-------------|
 | `core_inventory_snapshot` | Cleans and types the raw inventory snapshot. Casts date strings to DATE, integer flags to BOOLEAN, and currency columns to DECIMAL(10,2). Serves as the foundation for inventory health and reorder analysis. |
 | `core_daily_sales` | Cleans and types the raw sales data. Casts date strings to DATE, holiday promo flag to BOOLEAN, and price/revenue columns to DECIMAL(10,2). Primary source for velocity and turnover analysis. |
-| `core_purchase_orders` | Cleans and types the raw purchase order data. Adds a derived `planned_lead_time` column calculated from order and expected receipt dates. Not consumed by any MART model in this project — retained as a foundation for future supplier performance analysis. |
+| `core_purchase_orders` | Cleans and types the raw purchase order data. Adds a derived `planned_lead_time` column calculated from order and expected receipt dates. Not consumed by any MART model in this project, retained as a foundation for future supplier performance analysis. |
 
 ### MART Layer — BI-Ready Aggregated Tables
 
@@ -100,7 +100,7 @@ Data flows through three layers:
 
 ## Key Findings
 
-### Finding 1 - Reorder Points Are Critically Underset
+### Finding 1 : Reorder Points Are Critically Underset
 
 ![Reorder Analysis](assets/finding-1.png)
 
@@ -108,7 +108,7 @@ Every product in the catalogue has a current reorder point set far below what ac
 
 ---
 
-### Finding 2 — Demand Forecasts Systematically Overestimate Sales
+### Finding 2 : Demand Forecasts Systematically Overestimate Sales
 
 ![Forecast Accuracy](assets/finding-2.png)
 
@@ -116,7 +116,7 @@ Across all 20 products, the demand forecast consistently overestimates actual sa
 
 ---
 
-### Finding 3 — ProductsAreSimultaneouslyOverstoandExSOk vs Sutcts Are Simultaneously Overstocked and Experiencing Stockouts
+### Finding 3 : ProductsAreSimultaneouslyOverstoandExSOk vs Sutcts Are Simultaneously Overstocked and Experiencing Stockouts
 
 ![Overstock vs Stockout](assets/finding-3.png)
 
@@ -124,11 +124,11 @@ The most counterintuitive finding in this analysis is that products can be overs
 
 ---
 
-### Finding 4 — Inventory Turnover Is Below Benchmark Across the Catalogue
+### Finding 4 : Inventory Turnover Is Below Benchmark Across the Catalogue
 
 ![Inventory Turnover](assets/finding-4.png)
 
-Inventory turnover measures how efficiently stock is being converted into sales. A healthy retail operation typically targets a turnover ratio of 4–12x per year. In this dataset, turnover ratios range from 0.72 to 1.25 — well below any retail benchmark. This means stock is sitting in the warehouse longer than it should be relative to the value being sold. Action Figure Set and Classic LEGO Set have the lowest turnover at 0.72 and 0.78 respectively, indicating these products tie up the most cash relative to their sales velocity. It is important to note that this finding is partially a consequence of synthetic data calibration — inventory values were generated at a lower scale than sales volumes. In real operational data, this metric would provide a more reliable signal of cash efficiency.
+Inventory turnover measures how efficiently stock is being converted into sales. A healthy retail operation typically targets a turnover ratio of 4–12x per year. In this dataset, turnover ratios range from 0.72 to 1.25, well below any retail benchmark. This means stock is sitting in the warehouse longer than it should be relative to the value being sold. Action Figure Set and Classic LEGO Set have the lowest turnover at 0.72 and 0.78 respectively, indicating these products tie up the most cash relative to their sales velocity. It is important to note that this finding is partially a consequence of synthetic data calibration — inventory values were generated at a lower scale than sales volumes. In real operational data, this metric would provide a more reliable signal of cash efficiency.
 
 ## Recommendations
 

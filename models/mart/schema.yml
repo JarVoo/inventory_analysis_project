@@ -68,7 +68,7 @@ models:
         tests:
           - not_null
   - name: mart_inventory_turnover
-    description: "Mart model calculating inventory turnover metrics such as turnover ratio, days of inventory on"
+    description: "Mart model calculating inventory turnover metrics such as turnover ratio, days of inventory"
     columns:
       - name: product_id
         description: "Product identifier"

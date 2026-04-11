@@ -116,7 +116,7 @@ Across all 20 products, the demand forecast consistently overestimates actual sa
 
 ---
 
-### Finding 3 : ProductsAreSimultaneouslyOverstoandExSOk vs Sutcts Are Simultaneously Overstocked and Experiencing Stockouts
+### Finding 3 : Products Are Simultaneously Overstocked and Experiencing Stockouts
 
 ![Overstock vs Stockout](assets/finding-3.png)
 

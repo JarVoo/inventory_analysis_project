@@ -18,9 +18,7 @@ The natural next phase would extend this pipeline with a Python-based demand for
 
 ## AI-Assisted Development
 
-This project was built in collaboration with Claude (Anthropic) as an AI analytical thinking partner.
-
-Claude was used throughout this project for:
+Claude was used for assistance on this project for:
 
 - **Code review** - SQL models were written independently and reviewed for logic errors, analytical correctness, and best practices
 - **Analytical reasoning** - business logic behind each MART model was reasoned through conversationally before any code was written, ensuring models answered real operational questions
@@ -96,7 +94,33 @@ Data flows through three layers:
 | `mart_inventory_health` | Calculates stockout and overstock rates per product per store as a percentage of total trading days. Surfaces which product-store combinations have the most critical inventory imbalances. |
 | `mart_inventory_turnover` | Measures how efficiently stock is converted to sales by comparing average daily COGS against average daily inventory value. A ratio below 1.0 indicates stock is not moving fast enough relative to holding costs. |
 | `mart_reorder_analysis` | Compares current reorder points against data-driven suggestions based on actual average daily demand multiplied by supplier lead time. Also validates demand forecast accuracy against actual sales. |
+| `mart_gross_margin` | Calculates gross margin per product and classifying products into a 2x2 quadrant combining margin segment and velocity segment. Gross margin calculated as (net_revenue - COGS) / net_revenue * 100. |
+| `mart_stockout_revenue_lost` | Estimates revenue lost due to stockouts per product per store. Calculated as total_stockout_days * avg_daily_units_sold * avg_unit_price. Note: revenue loss is uniformly distributed across categories due to synthetic data calibration. |
+| `mart_overstock_cash_exposure` | Estimates cash tied up in excess stock per product per store. Excess stock floored at zero using GREATEST(). Supply status classified using avg_days_of_supply relative to lead_time_days. |
+| `mart_store_performance` | Stores ranked across five metrics : stockout rate, overstock rate, revenue lost, cash tied up, and inventory turnover. An overall performance score averages the five ranks. Lower score = better performing store. |
 
+## Technical Decisions
+
+### 1. GREATEST() for cash exposure flooring: 
+
+Where avg_closing_stock fell below the reorder point, the excess stock calculation would return a negative value, mathematically correct but operationally meaningless. A negative excess does not represent a problem to solve, it simply means the product is not overstocked. GREATEST(avg_closing_stock - reorder_point, 0) floors the result at zero, ensuring the cash exposure figure only captures genuine overstock and never misrepresents an understocked product as having tied-up capital.
+
+### 2. Window functions over subqueries for segmentation
+
+"Velocity, margin, and store ranking classifications were built using window functions rather than subqueries or CTEs with cross joins. Window functions calculate the comparison value in a single pass over the data without materialising intermediate results, making them more efficient and readable at scale."
+
+### 3. Views for CORE, tables for MART
+
+"CORE models are materialised as views so they always reflect the latest RAW data without storing redundant copies. MART models are materialised as physical tables because aggregation logic is expensive to recompute on every query, pre-computing and storing results keeps dashboard response times fast."
+
+### 4 Important Notes on the Data
+
+This is synthetic data generated with perfect regularity : every product appears on every date at every store with no gaps. This limits what I found:
+
+- days_with_sales is identical for every product
+- Revenue loss is uniformly distributed across categories
+- Store performance variation is narrow
+- Inventory values are calibrated lower than sales volumes, making turnover ratios unrealistically high
 
 ## Key Findings
 
@@ -130,13 +154,29 @@ The most counterintuitive finding in this analysis is that products can be overs
 
 Inventory turnover measures how efficiently stock is being converted into sales. A healthy retail operation typically targets a turnover ratio of 4–12x per year. In this dataset, turnover ratios range from 0.72 to 1.25, well below any retail benchmark. This means stock is sitting in the warehouse longer than it should be relative to the value being sold. Action Figure Set and Classic LEGO Set have the lowest turnover at 0.72 and 0.78 respectively, indicating these products tie up the most cash relative to their sales velocity. It is important to note that this finding is partially a consequence of synthetic data calibration, inventory values were generated at a lower scale than sales volumes. In real operational data, this metric would provide a more reliable signal of cash efficiency.
 
+### Finding 5: The financial consequence
+
+Estimated revenue lost to stockouts across all stores totals $2.77M, with a further $20.7M in cash tied up in excess stock, both direct consequences of the reorder misconfiguration identified in this analysis.
+
+### Finding 6: The 2x2 margin quadrant
+
+Cross-referencing margin with velocity reveals that several high-margin products sit in the Low Velocity quadrant, sleeping giants with strong profit potential that promotional intervention could unlock.
+
+### Finding 7: Store performance ranking
+
+Store-level ranking across five operational metrics identifies S002 as the best performing store and S005 as the worst, providing a starting point for targeted operational intervention.
+
 ## Recommendations
 
-Reorder points across all 20 products should be recalculated immediately using actual average daily sales multiplied by supplier lead time. The current configuration is underset across the entire catalogue, with Casual T-Shirt, Organic Oats, and USB-C Hub carrying the largest gaps. Until this is corrected, stockouts are structurally unavoidable regardless of how much stock is ordered.
+Reorder points across all 20 products should be recalculated immediately using actual average daily sales multiplied by supplier lead time. The current configuration is underset across the entire catalogue, with Casual T-Shirt, Organic Oats, and USB-C Hub carrying the largest gaps. Until this is corrected, stockouts are structurally unavoidable regardless of how much stock is ordered, and the financial consequence is real: estimated revenue lost to stockouts totals $2.77M across the dataset period.
 
-The demand forecasting model requires recalibration. A consistent 3.5% overestimate across every product is not random error - it is a systematic bias that compounds overstock levels over time. Adjusting the model inputs to reduce this directional bias will improve order accuracy and free up cash currently tied up in excess stock.
+The demand forecasting model requires recalibration. A consistent 3.5% overestimate across every product is not random error, it is a systematic bias that compounds overstock levels over time. Adjusting the model inputs to reduce this directional bias will improve order accuracy and reduce the $20.7M currently tied up in excess stock across all stores and products.
 
 For products simultaneously experiencing high overstock and stockout rates, particularly Canned Tomatoes, Smart Home Speaker, and Dining Table Oak, the solution is not to order more but to order more frequently in smaller batches. The replenishment cycle is the problem, not the volume. Smoother, more consistent deliveries will reduce the boom-and-bust pattern currently driving both metrics in the wrong direction.
+
+Cross-referencing gross margin with velocity reveals an additional strategic opportunity. Several high-margin products, including Classic LEGO Set and Building Blocks 100pc sit in the Low Velocity quadrant. These are not dead weight; they are sleeping giants with strong profit potential that targeted promotional intervention could unlock without adding inventory risk.
+
+Store-level analysis ranks S002 as the best performing store and S005 as the worst across five operational metrics: stockout rate, overstock rate, revenue lost, cash tied up, and inventory turnover. Rather than applying catalogue-wide fixes uniformly, operational interventions should be prioritised at S005 and S004 where the financial exposure is highest.
 
 Finally, the eight products with inventory turnover below 0.85 should be reviewed for promotional intervention. Action Figure Set and Classic LEGO Set are tying up the most cash relative to their sales velocity. Targeted discounting or bundling strategies would accelerate sell-through and improve overall capital efficiency across the catalogue.
 

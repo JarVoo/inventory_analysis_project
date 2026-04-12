@@ -20,7 +20,7 @@ models:
         description: "Store identifier"
         tests:
           - not_null
-      - name: total_stockout_days 
+      - name: total_stockout_days
         description: "The total number of days the product was out of stock during the period. CAST Boolean to INT (0/1) and sum over the period."
         tests:
           - not_null
@@ -36,8 +36,9 @@ models:
         description: "The average number of days the current stock will last based on demand forecast during the period. Round to 2 decimal places."
       - name: avg_closing_stock
         description: "The average closing stock quantity for the product during the period. Round to 2 decimal places."
+
   - name: mart_product_velocity
-    description: "Mart model calculating product velocity metrics such as units sold, sales revenue, and inventory turnover"
+    description: "Mart model calculating product velocity metrics such as units sold and velocity classification."
     columns:
       - name: product_id
         description: "Product identifier"
@@ -60,15 +61,16 @@ models:
         tests:
           - not_null
       - name: days_with_sales
-        description: "The total number of days with sales for the product during the period. COUNT of distinct dates"
+        description: "The total number of days with sales for the product during the period. COUNT of distinct dates. Note: in this synthetic dataset every product appears on every date across every store, so this value is identical for all products and does not provide meaningful signal."
         tests:
           - not_null
       - name: velocity_segment
-        description: "The velocity segment for the product based on average daily units sold. Categorized as 'High' if over average_daily_units_sold, 'Low' if below this average. Created with a CASE WHEN statement."
+        description: "The velocity segment for the product based on average daily units sold compared to the overall product average using a window function. Categorised as High Velocity, Low Velocity, or Average Velocity."
         tests:
           - not_null
+
   - name: mart_inventory_turnover
-    description: "Mart model calculating inventory turnover metrics such as turnover ratio, days of inventory"
+    description: "Mart model calculating inventory turnover metrics. Measures how efficiently stock is converted to sales by comparing average daily COGS against average daily inventory value. Note: turnover ratios in this dataset range from 0.72 to 1.25 — well below the healthy retail benchmark of 4-12x per year. This is a synthetic data calibration issue where inventory values were generated at a lower scale than sales volumes, not a model error."
     columns:
       - name: product_id
         description: "Product identifier"
@@ -87,17 +89,18 @@ models:
         tests:
           - not_null
       - name: avg_cogs
-        description: "The average cost of goods sold (COGS) for the product during the period. Round to 2 decimal places."
+        description: "The average daily cost of goods sold for the product at this store. Calculated as AVG(unit_cost * units_sold). Used as the numerator in the turnover calculation to ensure comparability with the daily avg_inventory_value denominator."
         tests:
           - not_null
       - name: avg_inventory_value
-        description: "The average inventory value for the product during the period. Round to 2 decimal places."
+        description: "The average daily inventory value at cost for the product at this store across the full dataset period. Represents a stable estimate of stock holding value. Note: in this synthetic dataset inventory values are calibrated lower than sales volumes — this metric should be interpreted directionally rather than as an absolute figure."
         tests:
           - not_null
       - name: inventory_turnover
-        description: "The inventory turnover ratio for the product during the period. Calculated as the averagecost of goods sold divided by the average inventory value. Round to 2 decimal places. Values with 0, were returned as NULL in CASE statement"
+        description: "Ratio of average daily COGS to average daily inventory value. Indicates how efficiently stock is converted to sales. A ratio above 1 suggests daily sales exceed average stock held. In this dataset this is an artifact of synthetic data calibration rather than a real operational finding. NULL returned where avg_inventory_value is zero."
+
   - name: mart_reorder_analysis
-    description: "Mart model calculating reorder analysis metrics such as suggested_reorder_point comparing to given reorder_point, comparing a computed actual forecast to given forecast."
+    description: "Mart model calculating reorder analysis metrics. Compares current reorder points against data-driven suggestions based on actual average daily demand multiplied by supplier lead time. Also validates demand forecast accuracy against actual sales."
     columns:
       - name: product_id
         description: "Product identifier"
@@ -111,18 +114,124 @@ models:
         description: "Product category"
         tests:
           - not_null
-      - name: suggested_reorder_point 
-        description: "The suggested reorder point for the product based on demand and lead time. Round to 2 decimal places. The average daily units sold multiplied by lead time days"
+      - name: suggested_reorder_point
+        description: "The suggested reorder point for the product based on actual demand and lead time. Calculated as AVG(units_sold) * lead_time_days. Ranges from 400 to 1,943 units — significantly higher than current reorder points across all products."
         tests:
           - not_null
       - name: reorder_point
-        description: "The given reorder point for the product. Round to 2 decimal places."
+        description: "The currently configured reorder point for the product from dim_product_master. Ranges from 92 to 149 units — critically underset relative to the suggested reorder point across the entire catalogue."
         tests:
           - not_null
       - name: avg_forecast
-        description: "The average forecasted demand for the product during the period. Round to 2 decimal places. AVG(demand_forecast)"
+        description: "The average forecasted demand for the product per day during the period. AVG(demand_forecast) from core_inventory_snapshot."
+      - name: avg_actual
+        description: "The average actual units sold per day during the period. AVG(units_sold) from core_daily_sales."
       - name: forecast_accuracy_percentage
-        description: "A calculated metric: (AVG(units_sold) - AVG(demand_forecast)) / AVG(demand_forecast) * 100. Round to 2 decimal places. Values with 0 in the denominator were returned as NULL in CASE statement."
+        description: "Calculated as (AVG(units_sold) - AVG(demand_forecast)) / AVG(demand_forecast) * 100. A negative value means the forecast overestimates actual demand. All products show a consistent negative bias of approximately -3.5%, indicating a systematic overestimate in the forecasting model rather than random error."
       - name: reorder_point_gap
-        description: "The gap between the suggested reorder point and the given reorder point. Calculated as suggested_reorder_point - reorder_point. Round to 2 decimal places."
+        description: "The gap between suggested and current reorder point. Calculated as suggested_reorder_point - reorder_point. All values are positive — confirming every product in the catalogue is systematically underset."
 
+  - name: mart_gross_margin
+    description: "Mart model calculating gross margin per product and classifying products into a 2x2 quadrant combining margin segment and velocity segment. Gross margin calculated as (net_revenue - COGS) / net_revenue * 100."
+    columns:
+      - name: product_id
+        description: "Product identifier"
+        tests:
+          - not_null
+          - unique
+      - name: product_name
+        description: "Name of the product"
+        tests:
+          - not_null
+      - name: product_margin
+        description: "Gross margin percentage. Calculated as (total_net_revenue - total_cogs) / total_net_revenue * 100."
+        tests:
+          - not_null
+      - name: quadrant
+        description: "2x2 classification combining margin and velocity segments. Four values: High Margin/High Velocity (stars), High Margin/Low Velocity (sleeping giants), Low Margin/High Velocity (volume drivers), Low Margin/Low Velocity (dead weight)."
+        tests:
+          - not_null
+
+  - name: mart_stockout_revenue_lost
+    description: "Mart model estimating revenue lost due to stockouts per product per store. Calculated as total_stockout_days * avg_daily_units_sold * avg_unit_price. Note: revenue loss is uniformly distributed across categories due to synthetic data calibration."
+    columns:
+      - name: store_id
+        description: "Store identifier"
+        tests:
+          - not_null
+      - name: product_name
+        description: "Name of the product"
+        tests:
+          - not_null
+      - name: category
+        description: "Product category"
+        tests:
+          - not_null
+      - name: estimated_stockout_revenue_loss
+        description: "Estimated revenue lost due to stockouts. Calculated as total_stockout_days * avg_daily_units_sold * avg_unit_price."
+        tests:
+          - not_null
+
+  - name: mart_overstock_cash_exposure
+    description: "Mart model estimating cash tied up in excess stock per product per store. Excess stock floored at zero using GREATEST(). Supply status classified using avg_days_of_supply relative to lead_time_days."
+    columns:
+      - name: product_name
+        description: "Name of the product"
+        tests:
+          - not_null
+      - name: category
+        description: "Product category"
+        tests:
+          - not_null
+      - name: store_id
+        description: "Store identifier"
+        tests:
+          - not_null
+      - name: cash_tied_up
+        description: "Estimated cash tied up in excess stock. Calculated as GREATEST(avg_closing_stock - suggested_reorder_point, 0) * total_overstock_days * unit_cost."
+        tests:
+          - not_null
+      - name: supply_status
+        description: "Classifies inventory urgency based on avg_days_of_supply relative to lead_time_days. Critical = below lead time. Healthy = between lead time and 2x lead time. Excess = above 2x lead time."
+        tests:
+          - not_null
+
+  - name: mart_store_performance
+    description: "Mart model ranking all five stores across five operational metrics — stockout rate, overstock rate, total revenue lost, total cash tied up, and inventory turnover. Each metric is ranked 1 to 5 where 1 is best performing. An overall performance score averages all five ranks — lower score means better overall store performance. Built entirely from existing MART models with no joins back to RAW or CORE. Note: variation between stores is narrow due to the uniform synthetic data generation — in real operational data store-level variance would be more pronounced and actionable."
+    columns:
+      - name: store_id
+        description: "Store identifier"
+        tests:
+          - not_null
+      - name: avg_stockout_rate
+        description: "Average stockout rate across all products at this store. Aggregated from mart_inventory_health."
+        tests:
+          - not_null
+      - name: avg_overstock_rate
+        description: "Average overstock rate across all products at this store. Aggregated from mart_inventory_health."
+        tests:
+          - not_null
+      - name: total_revenue_loss
+        description: "Total estimated revenue lost to stockouts across all products at this store. Aggregated from mart_stockout_revenue_lost."
+        tests:
+          - not_null
+      - name: total_cash_exposure
+        description: "Total estimated cash tied up in excess stock across all products at this store. Aggregated from mart_overstock_cash_exposure."
+        tests:
+          - not_null
+      - name: avg_inventory_turnover
+        description: "Average inventory turnover ratio across all products at this store. Aggregated from mart_inventory_turnover."
+        tests:
+          - not_null
+      - name: stockout_rank
+        description: "Store rank by average stockout rate. 1 = lowest stockout rate (best)."
+      - name: overstock_rank
+        description: "Store rank by average overstock rate. 1 = lowest overstock rate (best)."
+      - name: revenue_loss_rank
+        description: "Store rank by total estimated revenue lost. 1 = least revenue lost (best)."
+      - name: cash_exposure_rank
+        description: "Store rank by total cash tied up in excess stock. 1 = least cash tied up (best)."
+      - name: turnover_rank
+        description: "Store rank by average inventory turnover. 1 = highest turnover (best)."
+      - name: overall_performance_score
+        description: "Average of all five individual ranks. Lower score = better overall store performance. Best store is S002 with a score of 2.2. Worst store is S005 with a score of 4.2."

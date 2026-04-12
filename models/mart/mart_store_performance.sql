@@ -12,8 +12,8 @@ WITH inventory_health AS (
 revenue_loss AS (
     SELECT
         store_id,
-        SUM(estimated_revenue_loss) AS total_revenue_loss
-    FROM {{ ref('mart_stockout_revenue_loss') }}
+        SUM(estimated_stockout_revenue_loss) AS total_revenue_loss
+    FROM {{ ref('mart_stockout_revenue_lost') }}
     GROUP BY store_id
 ),
 
